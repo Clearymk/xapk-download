@@ -40,6 +40,9 @@ def get_download_link(app_id):
         add_similar_app_id_to_mission(apk_detail_url)
         if query_app_id(app_id):
             driver.get(apk_detail_url + "/versions")
+        else:
+            print("{+} %s added before" % app_id)
+            return download_link
     except NoSuchElementException:
         print("{+} no result find in apk pure ")
         return ""
@@ -77,10 +80,10 @@ def get_download_link(app_id):
 
 def query_app_id(app_id):
     cur = con.cursor()
-    res = cur.execute("SELECT * FROM apk_info WHERE app_id=?", app_id)
+    res = cur.execute("SELECT * FROM apk_info WHERE app_id=?", (app_id,))
     if len(res.fetchall()) >= 1:
-        return True
-    return False
+        return False
+    return True
 
 
 def add_similar_app_id_to_mission(apk_detail_url):
@@ -139,7 +142,6 @@ if __name__ == "__main__":
             with open("../backup.txt", "w") as f:
                 temp = ""
                 task_size = download_task.qsize()
-                print(task_size)
                 while task_size != 0:
                     temp = download_task.get()
                     f.write(temp + "\n")
