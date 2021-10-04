@@ -86,7 +86,6 @@ def add_similar_app_id_to_mission(apk_detail_url):
 
 
 def add_app_info_to_db(app_id, download_link):
-
     cur = con.cursor()
     sql = '''INSERT INTO apk_info(app_id, download_link) VALUES (?, ?)'''
     data = (app_id, download_link)
@@ -98,16 +97,44 @@ def add_app_info_to_db(app_id, download_link):
     con.commit()
 
 
-if __name__ == "__main__":
-    with open("../base-app", "r") as f:
+def get_init_task_from_predefined():
+    with open("../base-app.txt", "r") as f:
         for line in f.readlines():
+            if line == "\n" or line == "":
+                continue
             app_id = line.replace("\n", "")
             download_task.put(app_id)
 
+
+def get_init_task_from_backup():
+    with open("../backup.txt", "r") as f:
+        for line in f.readlines():
+            if line == "\n" or line == "":
+                continue
+            app_id = line.replace("\n", "")
+            download_task.put(app_id)
+
+
+if __name__ == "__main__":
+    get_init_task_from_backup()
+    count = 0
     while download_task.qsize() != 0:
         time.sleep(1)
         app_id = download_task.get()
         print("{+} start find download link %s" % app_id)
         get_download_link(app_id)
         print(str(download_task.qsize()) + " tasks remaining")
+        count = count + 1
+        if count == 10:
+            print("{+} back up download task")
+            with open("../backup.txt", "w") as f:
+                temp = ""
+                task_size = download_task.qsize()
+                print(task_size)
+                while task_size != 0:
+                    temp = download_task.get()
+                    f.write(temp + "\n")
+                    download_task.put(temp)
+                    task_size = task_size - 1
+            count = 0
         print("--------------------------")

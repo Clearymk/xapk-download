@@ -56,12 +56,12 @@ def move_apk(apk_name):
 
 
 if __name__ == "__main__":
-    start_index = 45
+    start_index = 431
     con = sqlite3.connect("../../apk_pure.db")
     cur = con.cursor()
     task_count_res = cur.execute("select count(*) from apk_info")
     task_count = task_count_res.fetchone()
-    while start_index < 45 + task_count[0]:
+    while start_index < 431 + task_count[0]:
         sql = '''SELECT * FROM apk_info WHERE id = ?'''
         cur.execute(sql, (start_index,))
         download_link_res = cur.fetchall()
