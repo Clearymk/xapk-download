@@ -38,7 +38,8 @@ def get_download_link(app_id):
         apk_detail_url = driver.find_element_by_tag_name("p>a").get_attribute('href')
         # 将similar apk加入任务队列中
         add_similar_app_id_to_mission(apk_detail_url)
-        driver.get(apk_detail_url + "/versions")
+        if query_app_id(app_id):
+            driver.get(apk_detail_url + "/versions")
     except NoSuchElementException:
         print("{+} no result find in apk pure ")
         return ""
@@ -72,6 +73,14 @@ def get_download_link(app_id):
         print("{+} no apks find, fail to find download link")
 
     return download_link
+
+
+def query_app_id(app_id):
+    cur = con.cursor()
+    res = cur.execute("SELECT * FROM apk_info WHERE app_id=?", app_id)
+    if len(res.fetchall()) >= 1:
+        return True
+    return False
 
 
 def add_similar_app_id_to_mission(apk_detail_url):
