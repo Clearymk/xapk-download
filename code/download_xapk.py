@@ -7,7 +7,7 @@ import sqlite3
 
 options = webdriver.ChromeOptions()
 prefs = {
-    'download.default_directory': "F:\\temp",
+    'download.default_directory': "G:\\apk_pure\\temp",
     'safebrowsing.enabled': 'false',
 }
 options.add_experimental_option('prefs', prefs)
@@ -15,23 +15,36 @@ driver = webdriver.Chrome(options=options)
 
 
 def get_download_dir():
-    return "F:\\temp"
+    return "G:\\apk_pure\\temp"
 
 
 def get_stored_dir():
-    return "F:\\download"
+    return "G:\\apk_pure\\download"
 
 
 def download_apk(url):
     if url != "":
         driver.get(url)
         file_name = re.sub(r" \(\d+\.?\d* MB\)", "", driver.find_element_by_class_name("file").text)
-
+        count = 0
+        success = False
         while not check_finished(file_name):
             print("downloading %s" % file_name)
             time.sleep(3)
-        print("{+} download %s success" % file_name)
-        move_apk(file_name)
+            count = count + 1
+
+            if count == 30:
+                print("{+} download time out")
+                with open("../fail_log.txt", 'a') as f:
+                    f.write(file_name + "\n")
+                break
+            success = True
+
+        if success:
+            print("{+} download %s success" % file_name)
+            move_apk(file_name)
+        else:
+            print("{+} download %s fail" % file_name)
     else:
         print("{+} no valid url provided")
 
@@ -56,12 +69,14 @@ def move_apk(apk_name):
 
 
 if __name__ == "__main__":
-    start_index = 431
-    con = sqlite3.connect("../../apk_pure.db")
+    # driver.get("https://apkpure.com")
+    start_index = 3035
+    con = sqlite3.connect("../apk_pure.db")
     cur = con.cursor()
     task_count_res = cur.execute("select count(*) from apk_info")
     task_count = task_count_res.fetchone()
-    while start_index < 431 + task_count[0]:
+    while start_index < task_count[0]:
+        print("{+} download id = %s" % start_index)
         sql = '''SELECT * FROM apk_info WHERE id = ?'''
         cur.execute(sql, (start_index,))
         download_link_res = cur.fetchall()
@@ -74,6 +89,6 @@ if __name__ == "__main__":
         # 更新表长度
         task_count_res = cur.execute("select count(*) from apk_info")
         task_count = task_count_res.fetchone()
-        print(task_count[0])
         start_index = start_index + 1
         print("----------------------------")
+    driver.quit()
