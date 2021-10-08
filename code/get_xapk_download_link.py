@@ -14,9 +14,6 @@ prefs = {
 }
 options.add_experimental_option('prefs', prefs)
 driver = webdriver.Chrome(options=options)
-
-# 用于记录已经访问过的app
-requested_app_id = set()
 # 用于记录需要下载的任务
 download_task = Queue()
 
@@ -24,12 +21,6 @@ con = sqlite3.connect("../../apk_pure.db")
 
 
 def get_download_link(app_id):
-    if app_id in requested_app_id:
-        print("{+} %s has request before" % app_id)
-        return
-    else:
-        requested_app_id.add(app_id)
-
     driver.get("https://apkpure.com/search?q=%s" % app_id)
     download_link = ""
     success = False
@@ -38,6 +29,7 @@ def get_download_link(app_id):
         apk_detail_url = driver.find_element_by_tag_name("p>a").get_attribute('href')
         # 将similar apk加入任务队列中
         add_similar_app_id_to_mission(apk_detail_url)
+
         if query_app_id(app_id):
             driver.get(apk_detail_url + "/versions")
         else:
@@ -93,7 +85,7 @@ def add_similar_app_id_to_mission(apk_detail_url):
         similar_app_id = _.get_attribute('href')
         if re.match(r"https://apkpure.com/[\s\S]*/[\s\S]*", similar_app_id):
             similar_app_id = similar_app_id.split('/')[-1]
-            if similar_app_id not in requested_app_id:
+            if query_from_visit(similar_app_id):
                 download_task.put(similar_app_id)
 
 
@@ -127,12 +119,34 @@ def get_init_task_from_backup():
             download_task.put(app_id)
 
 
+def add_visit_app_id(app_id):
+    cur = con.cursor()
+    try:
+        cur.execute("INSERT INTO visit_app_info(app_id) VALUES (?)", (app_id,))
+    except IntegrityError:
+        print("app_id duplicate")
+        return False
+    con.commit()
+    return True
+
+
+def query_from_visit(app_id):
+    cur = con.cursor()
+    res = cur.execute("SELECT * FROM visit_app_info WHERE app_id=?", (app_id,))
+    if len(res.fetchall()) >= 1:
+        return True
+    return False
+
+
 if __name__ == "__main__":
     get_init_task_from_backup()
     count = 0
     while download_task.qsize() != 0:
         time.sleep(1)
         app_id = download_task.get()
+        if not add_visit_app_id(app_id):
+            continue
+
         print("{+} start find download link %s" % app_id)
         get_download_link(app_id)
         print(str(download_task.qsize()) + " tasks remaining")
