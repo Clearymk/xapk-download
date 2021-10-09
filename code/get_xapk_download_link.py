@@ -5,7 +5,7 @@ from queue import Queue
 from sqlite3 import IntegrityError
 import sqlite3
 from selenium import webdriver
-from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import NoSuchElementException, WebDriverException
 
 options = webdriver.ChromeOptions()
 prefs = {
@@ -148,7 +148,11 @@ if __name__ == "__main__":
             continue
 
         print("{+} start find download link %s" % app_id)
-        get_download_link(app_id)
+        try:
+            get_download_link(app_id)
+        except WebDriverException:
+            time.sleep(5)
+            continue
         print(str(download_task.qsize()) + " tasks remaining")
         count = count + 1
         if count == 10:
