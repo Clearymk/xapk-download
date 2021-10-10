@@ -32,7 +32,7 @@ if __name__ == "__main__":
     get_category_info()
     for category in categorys:
         add_base_mission(category)
-    with open("mission.txt", "a+") as f:
+    with open("../mission.txt", "a+") as f:
         for item in temp:
             print(item.split("/")[-1])
             f.write(item.split("/")[-1])

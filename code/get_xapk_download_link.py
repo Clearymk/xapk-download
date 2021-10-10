@@ -42,21 +42,19 @@ def get_download_link(app_id):
         print("{+} fail to get download link, page maybe deleted or gone")
         return ""
 
-    for apk_details in driver.find_elements_by_class_name("ver-item"):
-        if 'XAPK' in apk_details.text and 'OBB' not in apk_details.text:
+    warp_element = driver.find_element_by_css_selector(".ver-wrap")
+    for li_element in warp_element.find_elements_by_tag_name("li"):
+        if "XAPK" in li_element.text and "OBB" not in li_element.text:
             try:
-                variants = apk_details.find_element_by_class_name("ver-item-v")
-                if 'Variants' in variants.text:
-                    driver.get(apk_detail_url + "/variant/" +
-                               apk_details.find_element_by_class_name("ver-item-n").text[1:] + "-XAPK")
-            except NoSuchElementException:
-                download_link = driver.find_element_by_css_selector(".ver-wrap>li>a").get_attribute("href")
-                success = True
-                break
-            try:
-                download_link = driver.find_element_by_css_selector(".table-cell>a").get_attribute("href")
-                success = True
-                break
+                if "Variants" in li_element.text:
+                    driver.get(li_element.find_element_by_tag_name("a").get_attribute("href"))
+                    download_link = driver.find_element_by_css_selector(".table-cell>a").get_attribute('href')
+                    success = True
+                    break
+                else:
+                    download_link = li_element.find_element_by_tag_name("a").get_attribute("href")
+                    success = True
+                    break
             except NoSuchElementException:
                 download_link = ""
                 success = False
@@ -80,13 +78,16 @@ def query_app_id(app_id):
 
 def add_similar_app_id_to_mission(apk_detail_url):
     driver.get(apk_detail_url)
+    similar_app_ids = set()
     top_list = driver.find_element_by_css_selector(".top-list")
     for _ in top_list.find_elements_by_css_selector("a[target=\"_blank\"]"):
         similar_app_id = _.get_attribute('href')
         if re.match(r"https://apkpure.com/[\s\S]*/[\s\S]*", similar_app_id):
             similar_app_id = similar_app_id.split('/')[-1]
-            if query_from_visit(similar_app_id):
-                download_task.put(similar_app_id)
+            if not query_from_visit(similar_app_id):
+                similar_app_ids.add(similar_app_id)
+    for app_id in similar_app_ids:
+        download_task.put(app_id)
 
 
 def add_app_info_to_db(app_id, download_link):
@@ -122,7 +123,7 @@ def get_init_task_from_backup():
 def add_visit_app_id(app_id):
     cur = con.cursor()
     try:
-        cur.execute("INSERT INTO visit_app_info(app_id) VALUES (?)", (app_id,))
+        cur.execute("INSERT INTO visited_app_info(app_id) VALUES (?)", (app_id,))
     except IntegrityError:
         print("app_id duplicate")
         return False
@@ -132,7 +133,7 @@ def add_visit_app_id(app_id):
 
 def query_from_visit(app_id):
     cur = con.cursor()
-    res = cur.execute("SELECT * FROM visit_app_info WHERE app_id=?", (app_id,))
+    res = cur.execute("SELECT * FROM visited_app_info WHERE app_id=?", (app_id,))
     if len(res.fetchall()) >= 1:
         return True
     return False
