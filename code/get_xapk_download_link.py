@@ -151,7 +151,7 @@ if __name__ == "__main__":
         try:
             get_download_link(app_id)
         except WebDriverException:
-            time.sleep(5)
+            time.sleep(60)
             continue
         print(str(download_task.qsize()) + " tasks remaining")
         count = count + 1
