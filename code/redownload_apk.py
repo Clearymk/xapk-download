@@ -3,10 +3,12 @@ import os
 import re
 import shutil
 import time
+from selenium.common.exceptions import NoSuchElementException
+
 
 options = webdriver.ChromeOptions()
 prefs = {
-    'download.default_directory': "E:\\temp",
+    'download.default_directory': "G:\\apk_pure\\temp",
     'safebrowsing.enabled': 'false',
 }
 options.add_experimental_option('prefs', prefs)
@@ -14,11 +16,11 @@ driver = webdriver.Chrome(options=options)
 
 
 def get_stored_dir():
-    return "E:\\download"
+    return "G:\\apk_pure\\download"
 
 
 def get_download_dir():
-    return "E:\\temp"
+    return "G:\\apk_pure\\temp"
 
 
 def download_apk(url):
@@ -59,7 +61,11 @@ if __name__ == "__main__":
         if file.endswith(".apk"):
             app_name = file.split('.apk')[0].split("_")[0]
             driver.get("https://apkpure.com/search?q=%s" % app_name)
-            apk_detail_url = driver.find_element_by_tag_name("p>a").get_attribute('href')
+            try:
+                apk_detail_url = driver.find_element_by_tag_name("p>a").get_attribute('href')
+            except NoSuchElementException:
+                print("{+} no result find in apk pure ")
+                continue
             driver.get(apk_detail_url + "/versions")
             warp_element = driver.find_element_by_css_selector(".ver-wrap")
             for li_element in warp_element.find_elements_by_tag_name("li"):
@@ -67,8 +73,10 @@ if __name__ == "__main__":
                     if "Variants" in li_element.text:
                         driver.get(li_element.find_element_by_tag_name("a").get_attribute("href"))
                         download_apk(driver.find_element_by_css_selector(".table-cell>a").get_attribute('href'))
+                        os.remove(os.path.join(get_stored_dir(), file))
                         break
                     else:
                         download_apk(li_element.find_element_by_tag_name("a").get_attribute("href"))
+                        os.remove(os.path.join(get_stored_dir(), file))
                         break
     driver.quit()
