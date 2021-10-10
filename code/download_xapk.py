@@ -70,7 +70,7 @@ def move_apk(apk_name):
 
 if __name__ == "__main__":
     # driver.get("https://apkpure.com")
-    start_index = 3462
+    start_index = 3689
     con = sqlite3.connect("../apk_pure.db")
     cur = con.cursor()
     task_count_res = cur.execute("select count(*) from apk_info")
