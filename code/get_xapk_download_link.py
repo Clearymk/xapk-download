@@ -38,7 +38,7 @@ def get_download_link(app_id):
     except NoSuchElementException:
         print("{+} no result find in apk pure ")
         return ""
-    if "Page Deleted or Gone" in driver.title:
+    if "Page Deleted or Gone" in driver.title or "404" in driver.title:
         print("{+} fail to get download link, page maybe deleted or gone")
         return ""
 

@@ -19,15 +19,24 @@ def read_file_in_xapk(file_path):
     return False
 
 
+def extract_apks(file_path):
+    if not zipfile.is_zipfile(file_path):
+        return
+    stored_path = "D:/apk_pure/decompress/%s" % file_path.split("\\")[-1].split(".")[0]
+    if not os.path.exists(stored_path):
+        zipfile.ZipFile(file_path, "r").extractall(stored_path)
+
+
 if __name__ == "__main__":
-    download_path = "G:\\apk_pure\\download"
+    download_path = "D:\\apk_pure\\download"
     count = 0
     for xapk_file in os.listdir(download_path):
         if not xapk_file.endswith(".xapk"):
             continue
         xapk_file_path = os.path.join(download_path, xapk_file)
-        if read_file_in_xapk(xapk_file_path):
-            count = count + 1
-            print(xapk_file_path)
-            print("------------------------")
-            print(count)
+        extract_apks(xapk_file_path)
+        # if read_file_in_xapk(xapk_file_path):
+        #     count = count + 1
+        #     print(xapk_file_path)
+        #     print("------------------------")
+        #     print(count)
