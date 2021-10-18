@@ -92,7 +92,7 @@ def add_similar_app_id_to_mission(apk_detail_url):
 
 def add_app_info_to_db(app_id, download_link):
     cur = con.cursor()
-    sql = '''INSERT INTO apk_info(app_id, download_link) VALUES (?, ?)'''
+    sql = '''INSERT INTO apk_info(app_id, xapk_download_link) VALUES (?, ?)'''
     data = (app_id, download_link)
 
     try:

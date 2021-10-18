@@ -4,10 +4,11 @@ import shutil
 import re
 import time
 import sqlite3
+from selenium.common.exceptions import NoSuchElementException
 
 options = webdriver.ChromeOptions()
 prefs = {
-    'download.default_directory': "G:\\apk_pure\\temp",
+    'download.default_directory': "D:\\apk_pure\\temp",
     'safebrowsing.enabled': 'false',
 }
 options.add_experimental_option('prefs', prefs)
@@ -15,16 +16,17 @@ driver = webdriver.Chrome(options=options)
 
 
 def get_download_dir():
-    return "G:\\apk_pure\\temp"
+    return "D:\\apk_pure\\temp"
 
 
 def get_stored_dir():
-    return "G:\\apk_pure\\download"
+    return "D:\\apk_pure\\download"
 
 
 def download_apk(url):
     if url != "":
         driver.get(url)
+
         file_name = re.sub(r" \(\d+\.?\d* MB\)", "", driver.find_element_by_class_name("file").text)
         count = 0
         success = False
@@ -35,7 +37,7 @@ def download_apk(url):
 
             if count == 30:
                 print("{+} download time out")
-                with open("../fail_log.txt", 'a') as f:
+                with open("log.txt", 'a') as f:
                     f.write(file_name + "\n")
                 break
             success = True
@@ -70,8 +72,8 @@ def move_apk(apk_name):
 
 if __name__ == "__main__":
     # driver.get("https://apkpure.com")
-    start_index = 3689
-    con = sqlite3.connect("../apk_pure.db")
+    start_index = 1
+    con = sqlite3.connect("../../apk_pure.db")
     cur = con.cursor()
     task_count_res = cur.execute("select count(*) from apk_info")
     task_count = task_count_res.fetchone()
@@ -83,7 +85,12 @@ if __name__ == "__main__":
         if len(download_link_res) == 0:
             print("{+} no download link find")
         else:
-            download_apk(download_link_res[0][2])
+            try:
+                download_apk(download_link_res[0][2])
+            except NoSuchElementException:
+                print("fail to download")
+                with open("log.txt", "a") as f:
+                    f.write(str(download_link_res[0]) + "\n")
             time.sleep(2)
 
         # 更新表长度

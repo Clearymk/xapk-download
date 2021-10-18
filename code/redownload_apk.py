@@ -5,10 +5,9 @@ import shutil
 import time
 from selenium.common.exceptions import NoSuchElementException
 
-
 options = webdriver.ChromeOptions()
 prefs = {
-    'download.default_directory': "G:\\apk_pure\\temp",
+    'download.default_directory': "D:\\apk_pure\\temp",
     'safebrowsing.enabled': 'false',
 }
 options.add_experimental_option('prefs', prefs)
@@ -16,11 +15,11 @@ driver = webdriver.Chrome(options=options)
 
 
 def get_stored_dir():
-    return "G:\\apk_pure\\download"
+    return "D:\\apk_pure\\download"
 
 
 def get_download_dir():
-    return "G:\\apk_pure\\temp"
+    return "D:\\apk_pure\\temp"
 
 
 def download_apk(url):
@@ -28,9 +27,16 @@ def download_apk(url):
         driver.get(url)
         file_name = re.sub(r" \(\d+\.?\d* MB\)", "", driver.find_element_by_class_name("file").text)
 
+        download_count = 0
         while not check_finished(file_name):
+
             print("downloading %s" % file_name)
             time.sleep(3)
+
+            download_count = download_count + 1
+            if download_count >= 60:
+                print("{+} download time out")
+                return
         print("{+} download %s success" % file_name)
         move_apk(file_name)
     else:
@@ -57,9 +63,23 @@ def move_apk(apk_name):
 
 
 if __name__ == "__main__":
+    current_task = "Business Card Maker Visiting Card Maker"
+    f = False
     for file in os.listdir(get_stored_dir()):
-        if file.endswith(".apk"):
-            app_name = file.split('.apk')[0].split("_")[0]
+        if current_task in file:
+            f = True
+        if file.endswith(".xapk") and f:
+            app_name = file.split('.xapk')[0].split("_")[0]
+
+            flag = False
+            for _ in os.listdir(get_stored_dir()):
+                if app_name in _ and ".apk" in _:
+                    flag = True
+                    break
+
+            if flag:
+                continue
+
             driver.get("https://apkpure.com/search?q=%s" % app_name)
             try:
                 apk_detail_url = driver.find_element_by_tag_name("p>a").get_attribute('href')
@@ -67,16 +87,21 @@ if __name__ == "__main__":
                 print("{+} no result find in apk pure ")
                 continue
             driver.get(apk_detail_url + "/versions")
+
+            if "Page Deleted or Gone" in driver.title:
+                print("{+} not find")
+                continue
+
             warp_element = driver.find_element_by_css_selector(".ver-wrap")
             for li_element in warp_element.find_elements_by_tag_name("li"):
-                if "XAPK" in li_element.text and "OBB" not in li_element.text:
+                if "APK" in li_element.text and "XAPK" not in li_element.text:
                     if "Variants" in li_element.text:
                         driver.get(li_element.find_element_by_tag_name("a").get_attribute("href"))
                         download_apk(driver.find_element_by_css_selector(".table-cell>a").get_attribute('href'))
-                        os.remove(os.path.join(get_stored_dir(), file))
+                        # os.remove(os.path.join(get_stored_dir(), file))
                         break
                     else:
                         download_apk(li_element.find_element_by_tag_name("a").get_attribute("href"))
-                        os.remove(os.path.join(get_stored_dir(), file))
+                        # os.remove(os.path.join(get_stored_dir(), file))
                         break
     driver.quit()

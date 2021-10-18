@@ -1,0 +1,4 @@
+(4239, 'com.ridemetro.houstontrip', 'https://apkpure.com/metro-trip/com.ridemetro.houstontrip/variant/2.32-APK')
+(4451, 'com.kidsplaylearning.apps.colorbook', 'https://apkpure.com/kids-coloring-book/com.kidsplaylearning.apps.colorbook/variant/3.8.2.5-APK')
+(4527, 'com.deemedyainc.dx2', 'https://apkpure.com/clan-race-pvp-motocross-races/com.deemedyainc.dx2/variant/2.0.2-XAPK')
+(5446, 'com.stanislau.bedtime.audio.stories.kids', 'https://apkpure.com/bedtime-audio-stories-for-kids-sleep-story-book/com.stanislau.bedtime.audio.stories.kids/download/41-XAPK-e64b3af7437607b153ada4b8f9df41f8?from=versions%2Fversion')
