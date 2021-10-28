@@ -16,6 +16,9 @@ driver = webdriver.Chrome(options=options)
 conn = sqlite3.connect("../../apk_pure.db")
 
 
+# driver = 1
+
+
 def get_stored_dir():
     return "D:\\apk_pure\\download"
 
@@ -31,10 +34,23 @@ def get_download_link(app_id):
     print("{+} start find download link %s" % app_id)
     try:
         apk_detail_url = driver.find_element_by_tag_name("p>a").get_attribute('href')
-        driver.get(apk_detail_url + "/versions")
+        apk_name = str(apk_detail_url).replace('https://apkpure.com/', '').split("/")[0]
+        dir_path = find_dir(apk_name.replace('-', ' '))
+        if dir_path != "":
+            download_vision = check_vision(dir_path)
+            if len(download_vision) == 2:
+                driver.get(apk_detail_url + "/versions")
+            else:
+                print("{+} do not need re-download")
+                return ""
+        else:
+            print("{+} no apk dir find")
+            return ""
     except NoSuchElementException:
         print("{+} no result find in apk pure ")
         return ""
+    print("{+} target download apk vision %s" % download_vision[1])
+    print("{+} target download xapk vision %s" % download_vision[0])
 
     if "Page Deleted or Gone" in driver.title or "404" in driver.title:
         print("{+} fail to get download link, page maybe deleted or gone")
@@ -42,7 +58,21 @@ def get_download_link(app_id):
 
     warp_element = driver.find_element_by_css_selector(".ver-wrap")
     for li_element in warp_element.find_elements_by_tag_name("li"):
-        if "APK" in li_element.text and "XAPK" not in li_element.text:
+        if "APK" in li_element.text and "XAPK" not in li_element.text and download_vision[1].upper() in li_element.text:
+            try:
+                if "Variants" in li_element.text:
+                    driver.get(li_element.find_element_by_tag_name("a").get_attribute("href"))
+                    download_link = driver.find_element_by_css_selector(".table-cell>a").get_attribute('href')
+                    success = True
+                    break
+                else:
+                    download_link = li_element.find_element_by_tag_name("a").get_attribute("href")
+                    success = True
+                    break
+            except NoSuchElementException:
+                download_link = ""
+                success = False
+        elif "XAPK" in li_element.text and download_vision[0].upper() in li_element.text:
             try:
                 if "Variants" in li_element.text:
                     driver.get(li_element.find_element_by_tag_name("a").get_attribute("href"))
@@ -62,10 +92,30 @@ def get_download_link(app_id):
         update_apk_download_info(download_link, app_id)
         download_apk(download_link)
     else:
-        write_log(app_id + "no apk find")
+        write_log(app_id + " no apk find")
         print("{+} no apk find, fail to find download link")
 
     return download_link
+
+
+def find_dir(name):
+    file_path = os.path.join(get_stored_dir(), name)
+    if os.path.exists(file_path):
+        return file_path
+    return ""
+
+
+def check_vision(path):
+    apk_vision = ""
+    xapk_vision = ""
+    for file in os.listdir(path):
+        if file.endswith(".apk"):
+            apk_vision = file.split("_")[1]
+        elif file.endswith(".xapk"):
+            xapk_vision = file.split("_")[1]
+    if apk_vision != xapk_vision:
+        return apk_vision, xapk_vision
+    return ""
 
 
 def check_finished(apk_name):
@@ -103,6 +153,7 @@ def download_apk(url):
             if count == 30:
                 print("{+} download time out")
                 write_log(file_name + "download time out")
+                success = False
                 break
             success = True
 
@@ -122,14 +173,14 @@ def update_apk_download_info(apk_download_link, apk_id):
 
 
 def write_log(data):
-    with open("apk_log.txt", 'a') as f:
+    with open("apk_log.txt", 'a', encoding='utf8') as f:
         f.write(data + '\n')
 
 
 if __name__ == "__main__":
-    current_task = "com.g19mobile.gamebooster"
+    current_task = "com.cephalon.navis"
     cur = conn.cursor()
-    cur.execute("SELECT app_id FROM apk_info ORDER BY ID")
+    cur.execute("SELECT app_id, apk_download_link FROM apk_info WHERE apk_download_link IS NOT NULL order by ID")
     res = cur.fetchall()
     flag = False
 
