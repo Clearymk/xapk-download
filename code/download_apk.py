@@ -178,7 +178,7 @@ def write_log(data):
 
 
 if __name__ == "__main__":
-    current_task = "com.cephalon.navis"
+    current_task = "com.yourchristiandate"
     cur = conn.cursor()
     cur.execute("SELECT app_id, apk_download_link FROM apk_info WHERE apk_download_link IS NOT NULL order by ID")
     res = cur.fetchall()

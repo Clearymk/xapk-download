@@ -40,7 +40,6 @@ def move_apk_right_vision():
                         xapk_vision = file_name.split("_")[1]
             if apk_vision != xapk_vision:
                 app_name = file.replace(get_stored_dir() + "\\", "")
-                print(app_name)
                 for _ in os.listdir(get_stored_dir()):
                     _ = os.path.join(get_stored_dir(), _)
                     if os.path.isfile(_):
@@ -58,7 +57,6 @@ def move_apk_right_vision():
                                     print(_, file)
                                     print("--------------------")
                                     shutil.move(_, file)
-                                    print(_.split("_")[1])
 
 
 def remove_diff_vision():
@@ -96,9 +94,6 @@ def check_version():
                 print(file)
                 print(file.replace(get_stored_dir(), get_result_dir()))
                 shutil.move(file, file.replace(get_stored_dir(), get_result_dir()))
-
-
-
 
 
 if __name__ == "__main__":
